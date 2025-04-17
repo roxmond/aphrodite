@@ -1,103 +1,127 @@
-import Image from "next/image";
+"use client";
+import { useState } from "react";
 
-export default function Home() {
+type Message = {
+  prompt: string;
+  reply: string;
+  from: "you" | "ai";
+};
+
+export default function HomePage() {
+  const [inputPrompt, setInputPrompt] = useState("");
+  const [agentPrompt, setAgentPrompt] = useState("");
+  const [history, setHistory] = useState<Message[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // 🔁 Call the API to prompt the AI
+  async function sendPrompt(prompt: string, from: "you" | "ai") {
+    setLoading(true);
+    const res = await fetch("/api/think", {
+      method: "POST",
+      body: JSON.stringify({ prompt }),
+    });
+    const data = await res.json();
+    setHistory((prev) => [...prev, { prompt, reply: data.reply, from }]);
+    setLoading(false);
+  }
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen flex flex-col lg:flex-row p-6 gap-6 text-gray-50 bg-gray-900">
+      {/* Left Column: Chat History */}
+      <div className="flex-1 bg-slate-800 p-4 rounded shadow">
+        <h1 className="text-2xl font-bold mb-4">🧠 Aphrodite</h1>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+          {history.map((msg, i) => (
+            <div key={i} className="border p-3 rounded">
+              <div className="text-sm text-gray-300 mb-1">
+                {msg.from === "you" ? "👤 You" : "🤖 AI (self-prompted)"}
+              </div>
+              <div>
+                <strong>Prompt:</strong> {msg.prompt}
+              </div>
+              <div className="mt-2">
+                <strong>Reply:</strong> {msg.reply}
+              </div>
+            </div>
+          ))}
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+
+        {/* Your prompt input */}
+        <div className="mt-6">
+          <textarea
+            className="w-full p-2 border rounded mb-2"
+            rows={3}
+            placeholder="Type your message to the AI"
+            value={inputPrompt}
+            onChange={(e) => setInputPrompt(e.target.value)}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          <button
+            className=" bg-slate-600 text-white px-4 py-2 rounded"
+            onClick={() => {
+              if (!inputPrompt.trim()) return;
+              sendPrompt(inputPrompt, "you");
+              setInputPrompt("");
+            }}
+            disabled={loading}
+          >
+            {loading ? "Sending..." : "Send to AI"}
+          </button>
+        </div>
+      </div>
+
+      {/* Right Column: Agent Thinking */}
+      <div className="w-full lg:w-96 bg-slate-800 p-4 rounded shadow">
+        <h2 className="text-xl font-semibold mb-4">
+          🤔 Aphrodite Thinking Panel
+        </h2>
+
+        {/* Generate agent's suggestion */}
+        <button
+          className="bg-slate-600 text-white px-4 py-2 rounded w-full mb-2"
+          onClick={async () => {
+            setLoading(true);
+            const res = await fetch("/api/generate-self-prompt", {
+              method: "POST",
+            });
+            const data = await res.json();
+            setAgentPrompt(data.prompt);
+            setLoading(false);
+          }}
+          disabled={loading}
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          {loading ? "Thinking..." : "Generate Self Prompt"}
+        </button>
+
+        {/* Show suggested prompt */}
+        {agentPrompt && (
+          <div className="border p-3 rounded mb-2">
+            <div className="font-semibold mb-1">Suggested Prompt:</div>
+            <div className="text-gray-300">{agentPrompt}</div>
+          </div>
+        )}
+
+        {/* Approve or edit */}
+        {agentPrompt && (
+          <div className="flex flex-col gap-2">
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded"
+              onClick={() => {
+                sendPrompt(agentPrompt, "ai");
+                setAgentPrompt("");
+              }}
+            >
+              ✅ Approve & Send
+            </button>
+            <textarea
+              className="w-full p-2 border rounded"
+              rows={2}
+              value={agentPrompt}
+              onChange={(e) => setAgentPrompt(e.target.value)}
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
