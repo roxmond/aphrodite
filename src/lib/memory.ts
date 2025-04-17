@@ -1,29 +1,51 @@
 import fs from "fs";
 import path from "path";
 
-type MemoryItem = {
-  role: "user" | "ai";
-  prompt: string;
-  reply: string;
-};
+// Define where the memory is stored
+const memoryPath = path.join(process.cwd(), "data", "memory.json");
 
-const memoryPath = path.resolve(process.cwd(), "memory.json");
-
-export async function saveToMemory(entry: MemoryItem) {
-  let current: MemoryItem[] = [];
-
-  if (fs.existsSync(memoryPath)) {
-    const raw = fs.readFileSync(memoryPath, "utf-8");
-    current = JSON.parse(raw);
-  }
-
-  current.push(entry);
-
-  fs.writeFileSync(memoryPath, JSON.stringify(current, null, 2), "utf-8");
+interface MemoryEntry {
+  timestamp: string;
+  userPrompt: string;
+  aiResponse: string;
+  mood?: string;
+  topics?: string[];
 }
 
-export async function getMemory(): Promise<MemoryItem[]> {
-  if (!fs.existsSync(memoryPath)) return [];
-  const raw = fs.readFileSync(memoryPath, "utf-8");
-  return JSON.parse(raw);
+// Check if memory file exists
+export function loadMemory(): MemoryEntry[] {
+  if (fs.existsSync(memoryPath)) {
+    const raw = fs.readFileSync(memoryPath, "utf-8");
+    try {
+      return JSON.parse(raw);
+    } catch (e) {
+      console.error("Error reading memory:", e);
+      return [];
+    }
+  }
+  return [];
+}
+
+// Save memory entry
+export function saveMemory(entry: MemoryEntry) {
+  const memory = loadMemory();
+  memory.push(entry);
+  fs.writeFileSync(memoryPath, JSON.stringify(memory, null, 2));
+}
+
+// Update memory with new conversation
+export function addMemory(
+  userPrompt: string,
+  aiResponse: string,
+  mood?: string,
+  topics?: string[]
+) {
+  const entry: MemoryEntry = {
+    timestamp: new Date().toISOString(),
+    userPrompt,
+    aiResponse,
+    mood,
+    topics,
+  };
+  saveMemory(entry);
 }

@@ -1,16 +1,12 @@
 import { talkToLlama } from "@/lib/agent";
-import { saveToMemory } from "@/lib/memory";
+//import { addMemory } from "@/lib/memory";
 
 export async function POST(req: Request) {
   const { prompt } = await req.json();
 
   const reply = await talkToLlama(prompt);
 
-  await saveToMemory({
-    role: "user",
-    prompt,
-    reply,
-  });
+  //addMemory(prompt, reply); // using the correct function from memory.ts
 
   return Response.json({ reply });
 }
