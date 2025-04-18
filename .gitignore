@@ -2,6 +2,8 @@
 
 # dependencies
 /data/memory.json
+/data/goal-history.json
+/src/lib/goal-content.ts
 /node_modules
 /.pnp
 .pnp.*
