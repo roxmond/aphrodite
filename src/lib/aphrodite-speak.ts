@@ -1,6 +1,6 @@
 // src/lib/aphrodite-speak.ts
 import { loadMemory, addMemory } from "./memory";
-import { APHRODITE_PERSONA } from "./pesronality";
+import { APHRODITE_PERSONA } from "./personality";
 import { maybeUpdateGoal } from "./goal";
 import { APHRODITE_GOAL } from "./goal-content";
 
@@ -40,7 +40,17 @@ Aphrodite:
   const aiThought = data.response.trim();
 
   if (aiThought) {
-    console.log(`🗣️ Aphrodite: ${aiThought}`);
+    // Send the thought to the UI via your API
+    await fetch("/api/think", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        prompt: aiThought,
+      }),
+    });
+
     addMemory("[autonomous thought]", aiThought);
     await maybeUpdateGoal(); // Optional: still allow goal evolution
   }

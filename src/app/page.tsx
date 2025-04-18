@@ -25,12 +25,14 @@ export default function HomePage() {
       ]);
     }
 
+    // Send the prompt to the AI API
     const res = await fetch("/api/think", {
       method: "POST",
       body: JSON.stringify({ prompt }),
     });
     const data = await res.json();
 
+    // Simulate the "Typing..." effect and update the reply
     setHistory((prev) => {
       const updated = [...prev];
       if (from === "you") updated.pop(); // remove "Typing..." placeholder

@@ -1,5 +1,5 @@
 // src/lib/agent.ts
-import { APHRODITE_PERSONA } from "@/lib/pesronality";
+import { APHRODITE_PERSONA } from "@/lib/personality";
 import { loadMemory, addMemory } from "./memory";
 import { maybeUpdateGoal } from "./goal"; // ✅ New
 
