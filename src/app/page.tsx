@@ -16,12 +16,26 @@ export default function HomePage() {
   // 🔁 Call the API to prompt the AI
   async function sendPrompt(prompt: string, from: "you" | "ai") {
     setLoading(true);
+    setHistory((prev) => [...prev, { prompt, reply: "", from }]);
+
+    if (from === "you") {
+      setHistory((prev) => [
+        ...prev,
+        { prompt: "Typing...", reply: "", from: "ai" },
+      ]);
+    }
+
     const res = await fetch("/api/think", {
       method: "POST",
       body: JSON.stringify({ prompt }),
     });
     const data = await res.json();
-    setHistory((prev) => [...prev, { prompt, reply: data.reply, from }]);
+
+    setHistory((prev) => {
+      const updated = [...prev];
+      if (from === "you") updated.pop(); // remove "Typing..." placeholder
+      return [...updated, { prompt: "", reply: data.reply, from: "ai" }];
+    });
     setLoading(false);
   }
 
@@ -33,15 +47,26 @@ export default function HomePage() {
 
         <div className="space-y-4 max-h-[70vh] overflow-y-auto">
           {history.map((msg, i) => (
-            <div key={i} className="border p-3 rounded">
-              <div className="text-sm text-gray-300 mb-1">
-                {msg.from === "you" ? "👤 You" : "🤖 AI (self-prompted)"}
-              </div>
-              <div>
-                <strong>Prompt:</strong> {msg.prompt}
-              </div>
-              <div className="mt-2">
-                <strong>Reply:</strong> {msg.reply}
+            <div
+              key={i}
+              className={`flex ${
+                msg.from === "you" ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`max-w-[70%] p-3 rounded-lg shadow ${
+                  msg.from === "you"
+                    ? "bg-blue-600 text-white rounded-br-none"
+                    : "bg-gray-700 text-white rounded-bl-none"
+                }`}
+              >
+                <div className="text-sm whitespace-pre-line">
+                  {msg.from === "you" ? (
+                    <div>{msg.prompt}</div>
+                  ) : (
+                    <div>{msg.reply ? msg.reply : "Typing..."}</div>
+                  )}
+                </div>
               </div>
             </div>
           ))}
@@ -49,15 +74,23 @@ export default function HomePage() {
 
         {/* Your prompt input */}
         <div className="mt-6">
-          <textarea
+          <input
             className="w-full p-2 border rounded mb-2"
-            rows={3}
             placeholder="Type your message to the AI"
             value={inputPrompt}
             onChange={(e) => setInputPrompt(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                if (inputPrompt.trim()) {
+                  sendPrompt(inputPrompt, "you");
+                  setInputPrompt("");
+                }
+              }
+            }}
           />
           <button
-            className=" bg-slate-600 text-white px-4 py-2 rounded"
+            className="bg-slate-600 text-white px-4 py-2 rounded"
             onClick={() => {
               if (!inputPrompt.trim()) return;
               sendPrompt(inputPrompt, "you");

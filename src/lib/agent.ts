@@ -1,7 +1,7 @@
 // src/lib/agent.ts
 import { APHRODITE_PERSONA } from "@/lib/pesronality";
-import { APHRODITE_GOAL } from "@/lib/goal";
 import { loadMemory, addMemory } from "./memory";
+import { maybeUpdateGoal } from "./goal"; // ✅ New
 
 export async function talkToLlama(userPrompt: string) {
   const memory = loadMemory();
@@ -15,6 +15,9 @@ export async function talkToLlama(userPrompt: string) {
       )
       .join("\n");
   }
+
+  const { APHRODITE_GOAL } = await import("./goal-content"); // ✅ dynamic import
+
   const fullPrompt = `
 ${APHRODITE_PERSONA}
 ${APHRODITE_GOAL}
@@ -43,8 +46,10 @@ Aphrodite:
   const data = await response.json();
   const aiResponse = data.response;
 
-  // Save the new memory
   addMemory(userPrompt, aiResponse);
+
+  // ✅ Trigger autonomous goal update (no interval, no buttons)
+  maybeUpdateGoal();
 
   return aiResponse;
 }
