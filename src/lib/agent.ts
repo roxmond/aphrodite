@@ -1,3 +1,4 @@
+// src/lib/agent.ts
 import { APHRODITE_PERSONA } from "@/lib/pesronality";
 import { APHRODITE_GOAL } from "@/lib/goal";
 import { loadMemory, addMemory } from "./memory";

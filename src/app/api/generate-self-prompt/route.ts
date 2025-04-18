@@ -1,3 +1,4 @@
+// src/app/api/generate-self-prompt
 import { loadMemory } from "@/lib/memory";
 import { talkToLlama } from "@/lib/agent";
 

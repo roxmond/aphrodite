@@ -1,3 +1,5 @@
+// src/lib/selfReflect.ts
+
 import { loadMemory } from "./memory";
 
 export function selfReflect() {
